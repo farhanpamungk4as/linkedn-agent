@@ -1,0 +1,14 @@
+services:
+  app:
+    mem_limit: 768m
+    cpus: 1.0
+    environment:
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    networks:
+      - default
+      - browser_internal
+
+networks:
+  browser_internal:
+    external: true
+    name: ${EXTERNAL_DOCKER_NETWORK:?Set EXTERNAL_DOCKER_NETWORK to the existing ai-chrome network}

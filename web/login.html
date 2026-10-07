@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09090b">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fafafa'/%3E%3Cpath d='M18 45 45 18M24 18h21v21' fill='none' stroke='%2318181b' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <title>Sign in · LinkedIn Agent</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/login.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <div class="brand-mark">↗</div>
+    <p class="eyebrow">Control center</p>
+    <h1>Welcome back</h1>
+    <p class="muted">Masuk untuk mengelola pipeline dan automation.</p>
+    <form id="login-form">
+      <label class="field">Username<input class="input" name="username" autocomplete="username" required></label>
+      <label class="field">Password<input class="input" type="password" name="password" autocomplete="current-password" required></label>
+      <button class="button" type="submit">Sign in →</button>
+      <p id="login-error" role="alert"></p>
+    </form>
+    <small>Protected admin workspace</small>
+  </main>
+</body>
+</html>
