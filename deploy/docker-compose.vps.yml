@@ -1,4 +1,11 @@
 services:
+  app:
+    networks:
+      default:
+      caddy_proxy:
+        aliases:
+          - linkedin-agent
+
   browser:
     image: lscr.io/linuxserver/chromium:latest
     restart: unless-stopped
@@ -30,3 +37,7 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 3
+
+networks:
+  caddy_proxy:
+    external: true

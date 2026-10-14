@@ -154,11 +154,11 @@ Periksa dulu apakah `ai-chrome` sudah menyediakan CDP dan network Docker privat 
 
 ### Browser khusus di VPS dengan Caddy
 
-Untuk VPS yang sudah memakai network Docker `caddy_proxy`, salin konfigurasi Caddy sekali ke `docker-compose.override.yml`, lalu jalankan browser khusus dengan profil di `data/browser-profile`. Browser lama milik layanan lain tidak perlu diubah. Desktop browser hanya dipublikasikan ke loopback VPS pada port 3002; CDP hanya tersedia di network Docker project melalui relay internal.
+Untuk VPS yang sudah memakai network Docker `caddy_proxy`, tautkan konfigurasi VPS sekali ke `docker-compose.override.yml`, lalu jalankan browser khusus dengan profil di `data/browser-profile`. Dengan tautan itu, perintah `docker compose` biasa akan mengelola aplikasi dan browser bersama. Browser lama milik layanan lain tidak perlu diubah. Desktop browser hanya dipublikasikan ke loopback VPS pada port 3002; CDP hanya tersedia di network Docker project melalui relay internal.
 
 ```bash
-cp deploy/docker-compose.caddy.yml docker-compose.override.yml
-docker compose -f docker-compose.yml -f docker-compose.override.yml -f deploy/docker-compose.browser.yml up -d --build
+ln -s deploy/docker-compose.vps.yml docker-compose.override.yml
+docker compose up -d --build
 ```
 
 Isi `.env`: `BROWSER_WORKER=playwright`, `BROWSER_CDP_URL=http://browser:9223`, `OUTREACH_MODE=manual`, dan `AUTOMATION_ENABLED=false` sampai browser serta akun LinkedIn diverifikasi. `browser` adalah nama service Docker; worker mengubahnya ke IP privat saat terhubung karena Chromium menolak nama service pada header CDP. Jangan memetakan port 9222 atau 9223 ke host.
