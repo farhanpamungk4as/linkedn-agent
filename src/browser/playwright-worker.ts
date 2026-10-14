@@ -1,4 +1,6 @@
 import { chromium, type Browser, type Page } from "playwright";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import type { AppConfig } from "../config/index.js";
 import type { Logger } from "../config/logger.js";
 import type { Lead } from "../leads/types.js";
@@ -8,6 +10,15 @@ import type { ConversationInspection, PreparedOutreach, ProfileInspection, Reply
 import { inspectProfilePage } from "../linkedin/profile.js";
 import { openConversation, readConversation, sendMessage } from "../linkedin/messaging.js";
 import { checkConversationReply } from "../linkedin/reply-monitor.js";
+
+export async function resolveCdpUrl(url: string, resolveHost = lookup): Promise<string> {
+  const endpoint = new URL(url);
+  if (endpoint.protocol !== "http:" || isIP(endpoint.hostname) || endpoint.hostname === "localhost") return url;
+  // Chromium accepts an IP address in the CDP Host header. Docker service names
+  // are resolved on every connection so browser container recreation is safe.
+  endpoint.hostname = (await resolveHost(endpoint.hostname, { family: 4 })).address;
+  return endpoint.toString();
+}
 
 export class PlaywrightBrowserWorker implements BrowserWorker {
   readonly type = "playwright" as const;
@@ -29,7 +40,7 @@ export class PlaywrightBrowserWorker implements BrowserWorker {
     if (this.browser?.isConnected()) return;
     if (!this.cdpUrl) throw new BrowserActionError("browser_offline", "BROWSER_CDP_URL is not configured");
     try {
-      this.browser = await chromium.connectOverCDP(this.cdpUrl, { timeout: 10_000 });
+      this.browser = await chromium.connectOverCDP(await resolveCdpUrl(this.cdpUrl), { timeout: 10_000 });
       if (!this.browser.contexts().length) throw new Error("Existing browser has no default context");
       this.logger.info("Connected to existing Chromium via CDP");
     } catch {

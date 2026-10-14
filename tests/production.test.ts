@@ -7,7 +7,7 @@ import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { fixture } from "./fixture.js";
 import { MockBrowserWorker, type BrowserWorker } from "../src/browser/worker.js";
-import { PlaywrightBrowserWorker } from "../src/browser/playwright-worker.js";
+import { PlaywrightBrowserWorker, resolveCdpUrl } from "../src/browser/playwright-worker.js";
 import { BrowserActionError } from "../src/browser/types.js";
 import { inspectProfileSnapshot } from "../src/linkedin/profile.js";
 import { inspectConversationSnapshot, parseLinkedInMessageTime } from "../src/linkedin/messaging.js";
@@ -80,6 +80,16 @@ test("Playwright worker reports offline without CDP and never creates a profile"
     assert.deepEqual(await worker.healthCheck(), { type: "playwright", online: false, detail: "CDP unavailable" });
     await assert.rejects(worker.connect(), (error: unknown) => error instanceof BrowserActionError && error.kind === "browser_offline");
   } finally { f.db.close(); }
+});
+
+test("CDP Docker hostname resolves to IP for Chromium Host validation", async () => {
+  const resolveHost = async (host: string) => {
+    assert.equal(host, "browser");
+    return { address: "172.23.0.3", family: 4 };
+  };
+  assert.equal(await resolveCdpUrl("http://browser:9223", resolveHost), "http://172.23.0.3:9223/");
+  assert.equal(await resolveCdpUrl("http://127.0.0.1:9222", resolveHost), "http://127.0.0.1:9222");
+  assert.equal(await resolveCdpUrl("https://browser:9223", resolveHost), "https://browser:9223");
 });
 
 test("browser disconnect and recovery each notify once", async () => {

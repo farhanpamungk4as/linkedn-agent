@@ -20,6 +20,7 @@ const usage = `Usage:
   npm run cli -- lead get <id>
   npm run cli -- template add --name "Intro" --body "Hi {{first_name}}"
   npm run cli -- template list
+  npm run cli -- browser health
   npm run outreach:run
   npm run monitor:run`;
 
@@ -85,6 +86,15 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(templates.create({ name: options.name, body: options.body }), null, 2));
     } else if (area === "template" && action === "list") {
       console.log(JSON.stringify(templates.list(), null, 2));
+    } else if (area === "browser" && action === "health") {
+      const worker = createBrowserWorker(config, logger);
+      try {
+        const health = await worker.healthCheck();
+        console.log(JSON.stringify(health, null, 2));
+        if (!health.online) process.exitCode = 1;
+      } finally {
+        await worker.disconnect();
+      }
     } else if ((area === "outreach" || area === "monitor") && action === "run") {
       const notifier = createNotifier(config, logger);
       const worker = createBrowserWorker(config, logger);

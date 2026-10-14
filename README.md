@@ -152,6 +152,25 @@ Setelah CDP dan selector diverifikasi, ubah `AUTOMATION_ENABLED=true`, lalu `doc
 
 Periksa dulu apakah `ai-chrome` sudah menyediakan CDP dan network Docker privat yang sama. `BROWSER_CDP_URL` harus bisa dijangkau **dari container app**, bukan hanya host VPS. Bila belum ada, konfigurasi minimal di deployment `ai-chrome` milik Anda adalah mengaktifkan remote debugging pada **alamat interface Docker privat tertentu** dan port internal (misalnya 9222), menggabungkan `ai-chrome` ke network privat bersama, tanpa mapping `ports:`/firewall publik untuk CDP. Parameter Chromium konseptual: `--remote-debugging-port=9222 --remote-debugging-address=<private-container-interface-IP>`. Alamat persis, dukungan image Chromium, dan URL WebSocket perlu diverifikasi pada setup `ai-chrome` yang ada; jangan mengubah profil/volume/session. Jangan bind CDP ke `0.0.0.0` atau mengeksposnya ke internet. Jika image hanya mendengar loopback, diperlukan adapter/forwarder internal yang dibatasi ke network privat; verifikasi endpoint dari app sebelum automasi dinyalakan.
 
+### Browser khusus di VPS dengan Caddy
+
+Untuk VPS yang sudah memakai network Docker `caddy_proxy`, salin konfigurasi Caddy sekali ke `docker-compose.override.yml`, lalu jalankan browser khusus dengan profil di `data/browser-profile`. Browser lama milik layanan lain tidak perlu diubah. Desktop browser hanya dipublikasikan ke loopback VPS pada port 3002; CDP hanya tersedia di network Docker project melalui relay internal.
+
+```bash
+cp deploy/docker-compose.caddy.yml docker-compose.override.yml
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f deploy/docker-compose.browser.yml up -d --build
+```
+
+Isi `.env`: `BROWSER_WORKER=playwright`, `BROWSER_CDP_URL=http://browser:9223`, `OUTREACH_MODE=manual`, dan `AUTOMATION_ENABLED=false` sampai browser serta akun LinkedIn diverifikasi. `browser` adalah nama service Docker; worker mengubahnya ke IP privat saat terhubung karena Chromium menolak nama service pada header CDP. Jangan memetakan port 9222 atau 9223 ke host.
+
+Dari terminal laptop, buka tunnel `ssh -N -L 3002:127.0.0.1:3002 pamm`, lalu buka `https://localhost:3002` dan login LinkedIn secara manual di desktop browser tersebut. Akhiri tunnel dengan Ctrl+C; browser di VPS tetap berjalan. Verifikasi koneksi tanpa membuka profil lead atau mengirim pesan:
+
+```bash
+docker compose exec app node dist/cli.js browser health
+```
+
+Setelah login, gunakan satu lead uji dengan `OUTREACH_MODE=manual` untuk memeriksa pembacaan profil dan percakapan. Aktifkan `AUTOMATION_ENABLED=true` hanya sesudah uji itu berhasil. Mode `approval` memerlukan persetujuan eksplisit sebelum mengirim pesan.
+
 ### Operasional
 
 **Update dan backup sebelum migrasi:** hentikan app supaya salinan `.db` konsisten. Simpan juga hash commit sebelumnya untuk rollback.

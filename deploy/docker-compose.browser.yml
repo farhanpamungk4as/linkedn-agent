@@ -1,0 +1,32 @@
+services:
+  browser:
+    image: lscr.io/linuxserver/chromium:latest
+    restart: unless-stopped
+    shm_size: 1gb
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Asia/Jakarta
+      CHROME_CLI: "--user-data-dir=/config/linkedin-profile --remote-debugging-port=9222"
+    volumes:
+      - ./data/browser-profile:/config
+    ports:
+      - "127.0.0.1:3002:3001"
+    networks:
+      - default
+
+  browser-cdp:
+    image: node:22-bookworm-slim
+    restart: unless-stopped
+    network_mode: service:browser
+    depends_on:
+      - browser
+    volumes:
+      - ./deploy/cdp-proxy.mjs:/opt/cdp-proxy.mjs:ro
+    command: ["node", "/opt/cdp-proxy.mjs"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:9223/json/version').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3

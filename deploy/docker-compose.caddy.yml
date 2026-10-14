@@ -1,0 +1,11 @@
+services:
+  app:
+    networks:
+      default:
+      caddy_proxy:
+        aliases:
+          - linkedin-agent
+
+networks:
+  caddy_proxy:
+    external: true
